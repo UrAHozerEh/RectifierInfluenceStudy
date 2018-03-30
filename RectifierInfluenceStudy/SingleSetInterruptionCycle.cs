@@ -18,17 +18,17 @@ namespace RectifierInfluenceStudy
 
         }
 
-        public override DateTime GetNextCycleStart(DateTime pCurrentTime)
-        {
-            throw new NotImplementedException();
-        }
-
         public override DateTime GetCycleStart(DateTime pCurrentTime)
         {
             throw new NotImplementedException();
         }
 
-        public override DateTime GetCycleEnd(DateTime pCurrentTime)
+        public override int GetSetPosition(DateTime pCurrentTime)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override double GetGraphTime(DateTime pGraphStart, DateTime pCurrentTime, int pNumCycles)
         {
             throw new NotImplementedException();
         }

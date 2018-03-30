@@ -16,14 +16,21 @@ namespace RectifierInfluenceStudyTester
         public Form1()
         {
             InitializeComponent();
+            string[] cycleNames = {"TEG Unit #10","TEG Unit #9","TEG Unit #8","TEG Unit #7","Pole Rectifier",
+                    "TEG Unit #6","TEG Unit #5","TEG Unit #4","TEG Unit #3","TEG Unit #2","TEG Unit #1","MP 156.13","MP 153.5","MP 148.5"};
+            InterruptionCycle cycle = new MultiSetInterruptionCycle("Testing Set 1", 17, 5, 2, cycleNames);
             string[] files = Directory.GetFiles(@"C:\Users\KevinC.ACCURATECORROSI\Desktop\3510\RIS\Phase 1\SET 2\", "*.csv");
             List<RISDataSet> sets = new List<RISDataSet>();
             RISDataSet set;
             double min = double.MaxValue;
             double max = double.MinValue;
+            Read read;
+            DateTime start;
             foreach(string file in files)
             {
-                set = new RISDataSet(file);
+                set = new RISDataSet(file, cycle);
+                read = set.Reads[0];
+                start = cycle.GetNextCycleStart(read.UTCTime);
                 if (set.MinValue < min)
                     min = set.MinValue;
                 if (set.MaxValue > max)
