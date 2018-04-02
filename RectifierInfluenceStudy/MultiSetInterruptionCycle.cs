@@ -36,7 +36,7 @@ namespace RectifierInfluenceStudy
 
         public override DateTime GetCycleStart(DateTime pCurrentTime)
         {
-            double curSet = (((pCurrentTime.Ticks - mOff * OFFSET) % (TimeSpan.TicksPerDay * 365) % mLength.Ticks)) / TimeSpan.TicksPerSecond * -1;
+            double curSet = (((pCurrentTime.Ticks) % (TimeSpan.TicksPerDay * 365) % mLength.Ticks)) / TimeSpan.TicksPerSecond * -1 + mOff * OFFSET;
             return pCurrentTime.AddSeconds(curSet);
         }
 

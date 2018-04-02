@@ -37,6 +37,7 @@ namespace RectifierInfluenceStudy
         private int mNumCycles;
         private bool mIsMidCycleStartAllowed;
         private Dictionary<int, List<GraphRead>> mGraphReads;
+        public Dictionary<int, List<GraphRead>> GraphReads => mGraphReads;
 
         public RISDataSet(string pFilePath, InterruptionCycle pCycle)
         {
