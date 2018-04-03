@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using SkiaSharp;
 
 namespace RectifierInfluenceStudy
 {
@@ -138,6 +139,29 @@ namespace RectifierInfluenceStudy
             if (mGraphEnd > mDataEnd)
                 throw new ArgumentException($"{mFileName} is not long enough.");
             mReads.Sort();
+        }
+
+        public SKPath GetPath()
+        {
+            SKPath path = null;
+            List<GraphRead> combined = new List<GraphRead>();
+
+            foreach (int i in mGraphReads.Keys)
+            {
+                combined.AddRange(mGraphReads[i]);
+            }
+            combined.Sort();
+            foreach (GraphRead read in combined)
+            {
+                if (path == null)
+                {
+                    path = new SKPath();
+                    path.MoveTo((float)read.Time, (float)read.Value);
+                    continue;
+                }
+                path.LineTo((float)read.Time, (float)read.Value);
+            }
+            return path;
         }
     }
 }

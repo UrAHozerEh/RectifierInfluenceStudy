@@ -21,38 +21,22 @@ namespace RectifierInfluenceStudy.DesktopGraphing
         {
             mBlackPaint = new SKPaint()
             {
-                Color = SKColors.Black,
+                Color = SKColors.Gray,
                 StrokeWidth = 2,
                 IsStroke = true,
                 IsAntialias = true
             };
         }
 
-        public RISDesktopGraph(Dictionary<int, List<GraphRead>> pGraphReads)
+        public RISDesktopGraph(RISDataSet pDataSet)
         {
             mBlackPaint = new SKPaint()
             {
-                Color = SKColors.Black,
+                Color = SKColors.Gray,
                 StrokeWidth = 2,
                 IsStroke = true
             };
-            List<GraphRead> combined = new List<GraphRead>();
-
-            foreach (int i in pGraphReads.Keys)
-            {
-                combined.AddRange(pGraphReads[i]);
-            }
-            combined.Sort();
-            foreach (GraphRead read in combined)
-            {
-                if (mPath == null)
-                {
-                    mPath = new SKPath();
-                    mPath.MoveTo((float)read.Time, (float)read.Value);
-                    continue;
-                }
-                mPath.LineTo((float)read.Time, (float)read.Value);
-            }
+            mPath = pDataSet.GetPath();
             //mPath.LineTo(0, 0);
             mPath.MoveTo(0, 0);
             mPath.LineTo(120, 0);
@@ -77,7 +61,7 @@ namespace RectifierInfluenceStudy.DesktopGraphing
                     lastTime = read.Time;
                     continue;
                 }
-                if(read.Time - lastTime < )
+                //if(read.Time - lastTime < )
                 mPath.LineTo((float)read.Time, (float)read.Value);
             }
 
