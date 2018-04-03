@@ -37,6 +37,8 @@ namespace RectifierInfluenceStudy
         public override DateTime GetCycleStart(DateTime pCurrentTime)
         {
             double curSet = (((pCurrentTime.Ticks) % (TimeSpan.TicksPerDay * 365) % mLength.Ticks)) / TimeSpan.TicksPerSecond * -1 + mOff * OFFSET;
+            if (curSet > 0)
+                curSet -= mLength.Ticks / TimeSpan.TicksPerSecond;
             return pCurrentTime.AddSeconds(curSet);
         }
 
@@ -72,6 +74,8 @@ namespace RectifierInfluenceStudy
         public override double GetGraphTime(DateTime pGraphStart, DateTime pCurrentTime, int pNumCycles)
         {
             double diffFromStart = (double)(pCurrentTime.Ticks - GetCycleStart(pGraphStart).Ticks) / TimeSpan.TicksPerSecond;
+            if (diffFromStart < 0)
+                diffFromStart += ((double)mLength.Ticks / TimeSpan.TicksPerSecond);
             return diffFromStart % (pNumCycles * ((double)mLength.Ticks / TimeSpan.TicksPerSecond));
         }
     }
