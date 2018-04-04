@@ -88,9 +88,16 @@
     <Compile Include="ViewController.designer.cs">
       <DependentUpon>ViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="RISCanvas.cs" />
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="Main.storyboard" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RectifierInfluenceStudy\RectifierInfluenceStudy.csproj">
+      <Project>{83D46FEC-2D99-4297-B351-748C5FA1D256}</Project>
+      <Name>RectifierInfluenceStudy</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Mac\Xamarin.Mac.CSharp.targets" />
 </Project>
