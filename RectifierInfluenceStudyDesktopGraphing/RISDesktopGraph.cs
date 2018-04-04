@@ -12,9 +12,6 @@ namespace RectifierInfluenceStudy.DesktopGraphing
     public class RISDesktopGraph : SKControl
     {
         public RISDataSet DataSet;
-        private SKPaint mTextPaint;
-        private SKPaint mGraphStartPaint;
-        private SKPaint mBackgroundPaint;
         private Dictionary<string, SKPaint> mPaints;
         private SKRect mGraphSize;
 
@@ -34,8 +31,9 @@ namespace RectifierInfluenceStudy.DesktopGraphing
         private void InitializePaint()
         {
             mPaints = new Dictionary<string, SKPaint>();
+            SKPaint paint;
 
-            mTextPaint = new SKPaint()
+            paint = new SKPaint()
             {
                 IsAntialias = true,
                 IsLinearText = true,
@@ -44,20 +42,41 @@ namespace RectifierInfluenceStudy.DesktopGraphing
                 TextAlign = SKTextAlign.Center,
                 TextSize = 25
             };
+            mPaints.Add("TitleText", paint);
 
-            mGraphStartPaint = new SKPaint()
+            paint = new SKPaint()
             {
                 IsAntialias = true,
-                Color = SKColors.LightGray,
+                Color = SKColors.LightSeaGreen,
                 IsStroke = true
             };
+            mPaints.Add("DataStartLine", paint);
 
-            mBackgroundPaint = new SKPaint()
+            paint = new SKPaint()
             {
                 IsAntialias = false,
                 Color = SKColors.White,
                 IsStroke = false
             };
+            mPaints.Add("GraphBackground", paint);
+
+            paint = new SKPaint()
+            {
+                IsAntialias = true,
+                Color = SKColors.LightGray,
+                StrokeWidth = 2,
+                IsStroke = true
+            };
+            mPaints.Add("MajorGridLine", paint);
+
+            paint = new SKPaint()
+            {
+                IsAntialias = true,
+                Color = new SKColor(0xd3, 0xd3, 0xd3, 0x7f), // Half alpha of LightGray
+                StrokeWidth = 1,
+                IsStroke = true
+            };
+            mPaints.Add("MinorGridLine", paint);
         }
 
         private void InitializeGraph()
@@ -77,10 +96,11 @@ namespace RectifierInfluenceStudy.DesktopGraphing
                 Right = e.Info.Rect.Width - 10,
                 Bottom = e.Info.Rect.Height - 10
             };
-            canvas.DrawRect(view, mBackgroundPaint);
+            canvas.DrawRect(view, mPaints["GraphBackground"]);
             graphStart.MoveTo((float)DataSet.GraphTimeStart, 0);
             graphStart.LineTo((float)DataSet.GraphTimeStart, -2);
-            canvas.DrawPath(GetScaledPath(graphStart, mGraphSize, view), mGraphStartPaint);
+            canvas.DrawPath(GetScaledPath(graphStart, mGraphSize, view), mPaints["DataStartLine"]);
+            DrawHorizontalGridLines(canvas, mGraphSize, view, 10, 5);
             //canvas.DrawRect(0, 0, 25, 25, mBlackPaint);
             //if (mPath != null)
             //    canvas.DrawPath(GetScaledPath(mPath, 0, 120, -2, 0, e.Info.Rect), mBlackPaint);
@@ -88,8 +108,33 @@ namespace RectifierInfluenceStudy.DesktopGraphing
             {
                 canvas.DrawPath(GetScaledPath(paths.Item2, mGraphSize, view), paths.Item1);
             }
-            canvas.DrawText(DataSet.FileName, view.Width / 2 + view.Left, mTextPaint.TextSize + view.Top, mTextPaint);
+            canvas.DrawText(DataSet.FileName, view.Width / 2 + view.Left, mPaints["TitleText"].TextSize + view.Top, mPaints["TitleText"]);
             canvas.Flush();
+        }
+
+        private void DrawHorizontalGridLines(SKCanvas pCanvas, SKRect pGraphRect, SKRect pView, int pMajorCount, int pMinorCount)
+        {
+            SKPath majorPath = new SKPath();
+            SKPath minorPath = new SKPath();
+            float majorY, minorY;
+            float minX = pGraphRect.Left;
+            float maxX = pGraphRect.Right;
+            float majorOffset = pGraphRect.Height / pMajorCount;
+            float minorOffset = majorOffset / pMinorCount;
+            for(int i = 0; i <= pMajorCount; ++i)
+            {
+                majorY = pGraphRect.Top + majorOffset * i;
+                majorPath.MoveTo(minX, majorY);
+                majorPath.LineTo(maxX, majorY);
+                for(int j = 0; j <= pMinorCount; ++j)
+                {
+                    minorY = majorY + minorOffset * j;
+                    minorPath.MoveTo(minX, minorY);
+                    minorPath.LineTo(maxX, minorY);
+                }
+            }
+            pCanvas.DrawPath(GetScaledPath(minorPath, pGraphRect, pView), mPaints["MinorGridLine"]);
+            pCanvas.DrawPath(GetScaledPath(majorPath, pGraphRect, pView), mPaints["MajorGridLine"]);
         }
 
         private SKPath GetScaledPath(SKPath pPath, SKRect pGraphRect, SKRect pCanvasRect)

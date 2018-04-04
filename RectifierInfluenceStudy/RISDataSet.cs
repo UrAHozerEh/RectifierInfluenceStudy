@@ -48,7 +48,7 @@ namespace RectifierInfluenceStudy
                 throw new ArgumentException("File does not exist!\n" + pFilePath);
             mCycle = pCycle;
             if (mCycle is MultiSetInterruptionCycle)
-                mNumCycles = 2;
+                mNumCycles = 1;
             else
                 mNumCycles = 20;
             mIsMidCycleStartAllowed = true;
@@ -80,7 +80,6 @@ namespace RectifierInfluenceStudy
             DateTime time;
             double readValue;
             Read read;
-            int setPosition;
             using (StreamReader sr = new StreamReader(pFilePath))
             {
                 while (!sr.EndOfStream)
@@ -140,7 +139,7 @@ namespace RectifierInfluenceStudy
                 mGraphEnd = mGraphEnd.Add(mCycle.Length);
 
             int setPosition;
-            DateTime time;
+            DateTime time, lastAdded = new DateTime();
             double readValue;
             bool hasReachedEnd = false;
             bool repeatToFill = true;
@@ -152,11 +151,12 @@ namespace RectifierInfluenceStudy
                     time = mReads[i].UTCTime.Add(offset);
                     readValue = mReads[i].Value;
 
-                    if (time >= mGraphStart && time <= mGraphEnd)
+                    if (time >= mGraphStart && time <= mGraphEnd && time > lastAdded)
                     {
                         setPosition = mCycle.GetSetPosition(time);
                         mGraphReads[setPosition].Add(new GraphRead(readValue,
                             mCycle.GetGraphTime(mGraphStart, time, mNumCycles)));
+                        lastAdded = time;
                     }
                     if (time > mGraphEnd)
                         hasReachedEnd = true;
@@ -165,17 +165,18 @@ namespace RectifierInfluenceStudy
             } while (!hasReachedEnd && repeatToFill);
         }
 
-        public SKPath GetPath()
+        public List<Tuple<SKPaint, SKPath>> GetPaths()
         {
-            SKPath path = null;
-            List<GraphRead> combined = new List<GraphRead>();
+            var paths = new List<Tuple<SKPaint, SKPath>>();
+            bool fillUnder = true;
             double prev = 0;
-
+            List<GraphRead> combined = new List<GraphRead>();
             foreach (int i in mGraphReads.Keys)
             {
                 combined.AddRange(mGraphReads[i]);
             }
             combined.Sort();
+            SKPath path = null;
             foreach (GraphRead read in combined)
             {
                 if (path == null)
@@ -185,51 +186,44 @@ namespace RectifierInfluenceStudy
                     prev = read.Time;
                     continue;
                 }
-                if(Math.Abs(read.Time - prev) > 1)
+                if (Math.Abs(read.Time - prev) > 1)
                 {
                     path.MoveTo((float)read.Time, (float)read.Value);
                     prev = read.Time;
                     continue;
                 }
+                prev = read.Time;
                 path.LineTo((float)read.Time, (float)read.Value);
             }
-            return path;
-        }
-
-        public List<Tuple<SKPaint, SKPath>> GetPaths()
-        {
-            var paths = new List<Tuple<SKPaint, SKPath>>();
-
-            SKPaint goodPaint = new SKPaint()
-            {
-                Color = SKColors.Green,
-                StrokeWidth = 2,
-                IsStroke = false,
-                IsAntialias = true
-            };
-            SKPaint badPaint = new SKPaint()
-            {
-                Color = SKColors.Red,
-                StrokeWidth = 2,
-                IsStroke = false,
-                IsAntialias = true
-            };
-            SKPaint paint;
-            SKPath path = null;
-            paint = new SKPaint()
+            SKPaint paint = new SKPaint()
             {
                 Color = SKColors.Blue,
                 StrokeWidth = 1,
                 IsStroke = true,
                 IsAntialias = true
             };
-            paths.Add(new Tuple<SKPaint, SKPath>(paint, GetPath()));
+            paths.Add(new Tuple<SKPaint, SKPath>(paint, path));
+            path = null;
+            SKPaint goodPaint = new SKPaint()
+            {
+                Color = SKColors.Green,
+                StrokeWidth = 3,
+                IsStroke = !fillUnder,
+                IsAntialias = true
+            };
+            SKPaint badPaint = new SKPaint()
+            {
+                Color = SKColors.Red,
+                StrokeWidth = 3,
+                IsStroke = !fillUnder,
+                IsAntialias = true
+            };
+            
             List<GraphRead> reads;
             float median = 0;
             float otherMedian = 0;
             float first = 0;
             float last = 0;
-            double prev = 0;
 
             foreach (int i in mGraphReads.Keys)
             {
@@ -253,9 +247,12 @@ namespace RectifierInfluenceStudy
                     }
                     if (Math.Abs(read.Time - prev) > 1)
                     {
-                        path.LineTo(last, median);
-                        path.LineTo(first, median);
-                        path.Close();
+                        if (fillUnder)
+                        {
+                            path.LineTo(last, median);
+                            path.LineTo(first, median);
+                            path.Close();
+                        }
                         first = (float)read.Time;
                         prev = read.Time;
                         path.MoveTo((float)read.Time, (float)read.Value);
@@ -269,9 +266,12 @@ namespace RectifierInfluenceStudy
                 reads.Sort((r1, r2) => r1.Value.CompareTo(r2.Value));
                 otherMedian = (float)reads[reads.Count / 2].Value;
 
-                path.LineTo(last, median);
-                path.LineTo(first, median);
-                path.Close();
+                if (fillUnder)
+                {
+                    path.LineTo(last, median);
+                    path.LineTo(first, median);
+                    path.Close();
+                }
                 paint = (otherMedian > median ? goodPaint : badPaint);
                 if (Math.Abs(otherMedian - median) > 0.005)
                     paths.Add(new Tuple<SKPaint, SKPath>(paint, path));
