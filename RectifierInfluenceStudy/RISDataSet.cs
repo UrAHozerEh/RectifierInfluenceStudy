@@ -9,58 +9,50 @@ namespace RectifierInfluenceStudy
 {
     public class RISDataSet
     {
-        private double mLatitude;
-        public double Latitude => mLatitude;
-        private double mLongitude;
-        public double Longitude => mLongitude;
-        private double mAltitude;
-        public double Altitude => mAltitude;
-
-        private string mFileName;
-        public string FileName => mFileName;
-
-        private TimeSpan mDuration;
-        public TimeSpan Duration => mDuration;
-        private DateTime mDataStart;
-        public DateTime DataStart => mDataStart;
-        private DateTime mDataEnd;
-        public DateTime DataEnd => mDataEnd;
-        private double mMaxValue;
-        public double MaxValue => mMaxValue;
-        private double mMinValue;
-        public double MinValue => mMinValue;
-
-        private List<Read> mReads;
-        public List<Read> Reads => mReads;
-        private InterruptionCycle mCycle;
-        private DateTime mGraphStart;
-        public double GraphLength => (double)mCycle.Length.Ticks / TimeSpan.TicksPerSecond * mNumCycles;
-        public double GraphTimeStart => mCycle.GetGraphTime(mGraphStart, mGraphStart, mNumCycles);
-        private DateTime mGraphEnd;
+        public double Latitude { get; private set; }
+        public double Longitude { get; private set; }
+        public double Altitude { get; private set; }
+        public string FileName { get; private set; }
+        public DateTime TimeStart { get; private set; }
+        public DateTime TimeEnd { get; private set; }
+        public TimeSpan DataDuration => TimeEnd - TimeStart;
+        public float MaxValueData { get; private set; }
+        public float MinValueData { get; private set; }
+        private List<Read> _DataReads;
+        public IReadOnlyList<Read> DataReads
+        {
+            get { return _DataReads.AsReadOnly(); }
+        }
+        public InterruptionCycle InterruptionCycle { get; set; }
+        public DateTime GraphStart { get; private set; }
+        public DateTime GraphEnd { get; private set; }
+        public TimeSpan GraphLength => TimeSpan.FromTicks(InterruptionCycle.Length.Ticks * mNumCycles);
+        public double GraphTimeStart => InterruptionCycle.GetGraphTime(GraphStart, GraphStart, mNumCycles);
         private int mNumCycles;
         private bool mIsMidCycleStartAllowed;
         private Dictionary<int, List<GraphRead>> mGraphReads;
         public Dictionary<int, List<GraphRead>> GraphReads => mGraphReads;
+        public string Output = "";
 
-        public RISDataSet(string pFilePath, InterruptionCycle pCycle)
+        public RISDataSet(string pFilePath, InterruptionCycle pInterruptionCycle)
         {
             if (!File.Exists(pFilePath))
                 throw new ArgumentException("File does not exist!\n" + pFilePath);
-            mCycle = pCycle;
-            if (mCycle is MultiSetInterruptionCycle)
+            InterruptionCycle = pInterruptionCycle;
+            if (InterruptionCycle is MultiSetInterruptionCycle)
                 mNumCycles = 1;
             else
                 mNumCycles = 20;
             mIsMidCycleStartAllowed = true;
             mGraphReads = new Dictionary<int, List<GraphRead>>();
-            for (int i = 0; i < mCycle.Sets.Length; ++i)
+            for (int i = 0; i < InterruptionCycle.Sets.Length; ++i)
             {
                 mGraphReads.Add(i, new List<GraphRead>());
             }
-            mFileName = Path.GetFileNameWithoutExtension(pFilePath);
-            mReads = new List<Read>();
-            mMaxValue = double.MinValue;
-            mMinValue = double.MaxValue;
+            FileName = Path.GetFileNameWithoutExtension(pFilePath);
+            _DataReads = new List<Read>();
+            MaxValueData = float.MinValue;
+            MinValueData = float.MaxValue;
 
             switch (Path.GetExtension(pFilePath))
             {
@@ -78,7 +70,7 @@ namespace RectifierInfluenceStudy
             string[] split;
             int lineCount = 0;
             DateTime time;
-            double readValue;
+            float readValue, curVal;
             Read read;
             using (StreamReader sr = new StreamReader(pFilePath))
             {
@@ -89,38 +81,40 @@ namespace RectifierInfluenceStudy
 
                     split = line.Split(',');
                     if (!DateTime.TryParseExact(split[0], "M/dd/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture, DateTimeStyles.None, out time))
-                        throw new ArgumentException($"Format of file {mFileName} is incorrect on line {lineCount}\nTime is incorrect format.");
-                    if (!double.TryParse(split[1], out readValue))
-                        throw new ArgumentException($"Format of file {mFileName} is incorrect on line {lineCount}\nRead is not double.");
+                        throw new ArgumentException($"Format of file {FileName} is incorrect on line {lineCount}\nTime is incorrect format.");
+                    if (!float.TryParse(split[1], out readValue))
+                        throw new ArgumentException($"Format of file {FileName} is incorrect on line {lineCount}\nRead is not double.");
                     if (lineCount == 1)
                     {
                         if (split.Length != 7)
-                            throw new ArgumentException($"Format of file {mFileName} is incorrect on line {lineCount}\nMissing GPS Data.");
-                        if (!double.TryParse(split[3], out mLatitude))
-                            throw new ArgumentException($"Format of file {mFileName} is incorrect on line {lineCount}\nLatitude is not double.");
-                        if (!double.TryParse(split[4], out mLongitude))
-                            throw new ArgumentException($"Format of file {mFileName} is incorrect on line {lineCount}\nLongitude is not double.");
-                        if (!double.TryParse(split[5], out mAltitude))
-                            throw new ArgumentException($"Format of file {mFileName} is incorrect on line {lineCount}\nAltitude is not double.");
+                            throw new ArgumentException($"Format of file {FileName} is incorrect on line {lineCount}\nMissing GPS Data.");
+                        if (!float.TryParse(split[3], out curVal))
+                            throw new ArgumentException($"Format of file {FileName} is incorrect on line {lineCount}\nLatitude is not double.");
+                        Latitude = curVal;
+                        if (!float.TryParse(split[4], out curVal))
+                            throw new ArgumentException($"Format of file {FileName} is incorrect on line {lineCount}\nLongitude is not double.");
+                        Longitude = curVal;
+                        if (!float.TryParse(split[5], out curVal))
+                            throw new ArgumentException($"Format of file {FileName} is incorrect on line {lineCount}\nAltitude is not double.");
+                        Altitude = curVal;
                     }
                     read = new Read(readValue, time);
-                    mReads.Add(read);
+                    _DataReads.Add(read);
 
-                    if (read.Value < mMinValue)
+                    if (read.Value < MinValueData)
                     {
-                        mMinValue = read.Value;
+                        MinValueData = read.Value;
                     }
-                    if (read.Value > mMaxValue)
+                    if (read.Value > MaxValueData)
                     {
-                        mMaxValue = read.Value;
+                        MaxValueData = read.Value;
                     }
                 }
             }
-            mDataStart = mReads[0].UTCTime;
-            mDataEnd = mReads[mReads.Count - 1].UTCTime;
-            mDuration = mDataEnd - mDataStart;
+            TimeStart = _DataReads[0].UTCTime;
+            TimeEnd = _DataReads[_DataReads.Count - 1].UTCTime;
             CreateGraphReads();
-            mReads.Sort();
+            _DataReads.Sort();
         }
 
         public void CreateGraphReads()
@@ -128,15 +122,13 @@ namespace RectifierInfluenceStudy
 
             if (!mIsMidCycleStartAllowed)
             {
-                mGraphStart = mCycle.GetNextCycleStart(mReads[0].UTCTime);
+                GraphStart = InterruptionCycle.GetNextCycleStart(_DataReads[0].UTCTime);
             }
             else
             {
-                mGraphStart = mReads[0].UTCTime;
+                GraphStart = _DataReads[0].UTCTime;
             }
-            mGraphEnd = mGraphStart;
-            for (int i = 0; i < mNumCycles; ++i)
-                mGraphEnd = mGraphEnd.Add(mCycle.Length);
+            GraphEnd = GraphStart.AddSeconds(InterruptionCycle.Length.TotalSeconds * mNumCycles);
 
             int setPosition;
             DateTime time, lastAdded = new DateTime();
@@ -146,22 +138,22 @@ namespace RectifierInfluenceStudy
             TimeSpan offset = new TimeSpan();
             do
             {
-                for (int i = 0; i < mReads.Count; ++i)
+                for (int i = 0; i < _DataReads.Count; ++i)
                 {
-                    time = mReads[i].UTCTime.Add(offset);
-                    readValue = mReads[i].Value;
+                    time = _DataReads[i].UTCTime.Add(offset);
+                    readValue = _DataReads[i].Value;
 
-                    if (time >= mGraphStart && time <= mGraphEnd && time > lastAdded)
+                    if (time >= GraphStart && time <= GraphEnd && time > lastAdded)
                     {
-                        setPosition = mCycle.GetSetPosition(time);
+                        setPosition = InterruptionCycle.GetSetPosition(time);
                         mGraphReads[setPosition].Add(new GraphRead(readValue,
-                            mCycle.GetGraphTime(mGraphStart, time, mNumCycles)));
+                            InterruptionCycle.GetGraphTime(GraphStart, time, mNumCycles)));
                         lastAdded = time;
                     }
-                    if (time > mGraphEnd)
+                    if (time > GraphEnd)
                         hasReachedEnd = true;
                 }
-                offset = offset.Add(mCycle.Length);
+                offset = offset.Add(InterruptionCycle.Length);
             } while (!hasReachedEnd && repeatToFill);
         }
 
@@ -218,13 +210,14 @@ namespace RectifierInfluenceStudy
                 IsStroke = !fillUnder,
                 IsAntialias = true
             };
-            
+
             List<GraphRead> reads;
             float median = 0;
             float otherMedian = 0;
             float first = 0;
             float last = 0;
 
+            Output = "";
             foreach (int i in mGraphReads.Keys)
             {
                 reads = new List<GraphRead>(mGraphReads[i]);
@@ -273,6 +266,7 @@ namespace RectifierInfluenceStudy
                     path.Close();
                 }
                 paint = (otherMedian > median ? goodPaint : badPaint);
+                Output += $"{i}, {Math.Round(otherMedian - median, 3) * 1000}\n";
                 if (Math.Abs(otherMedian - median) > 0.005)
                     paths.Add(new Tuple<SKPaint, SKPath>(paint, path));
                 path = null;

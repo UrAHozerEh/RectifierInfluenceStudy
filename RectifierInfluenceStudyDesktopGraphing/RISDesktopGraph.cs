@@ -81,7 +81,7 @@ namespace RectifierInfluenceStudy.DesktopGraphing
 
         private void InitializeGraph()
         {
-            mGraphSize = new SKRect(0, 0, (float)DataSet.GraphLength, -2);
+            mGraphSize = new SKRect(0, 0, (float)DataSet.GraphLength.TotalSeconds, -2);
         }
 
         protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)

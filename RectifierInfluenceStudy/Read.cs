@@ -6,12 +6,12 @@ namespace RectifierInfluenceStudy
 {
     public class Read : IComparable<Read>
     {
-        private double mValue;
-        public double Value => mValue;
+        private float mValue;
+        public float Value => mValue;
         private DateTime mUTCTime;
         public DateTime UTCTime => mUTCTime;
 
-        public Read(double pValue, DateTime pUTCTime)
+        public Read(float pValue, DateTime pUTCTime)
         {
             mValue = pValue;
             mUTCTime = pUTCTime;

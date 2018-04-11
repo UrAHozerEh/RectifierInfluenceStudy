@@ -36,7 +36,7 @@ namespace RectifierInfluenceStudyTester
             foreach (string file in files)
             {
                 set = new RISDataSet(file, cycle);
-                read = set.Reads[0];
+                read = set.DataReads[0];
                 start = cycle.GetNextCycleStart(read.UTCTime);
                 if (set.MinValue < min)
                     min = set.MinValue;
