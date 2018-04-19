@@ -8,9 +8,8 @@ namespace RectifierInfluenceStudy
     public class RISGraph
     {
         public RISDataSet DataSet { get; set; }
-        private Dictionary<string, SKPaint> mPaints;
+        private Dictionary<string, SKPaint> _Paints;
         public SKRect GraphSize { get; set; }
-        public string Output { get { return DataSet.Output; }}
 
         public RISGraph(RISDataSet pDataSet)
         {
@@ -21,7 +20,7 @@ namespace RectifierInfluenceStudy
 
         private void InitializePaint()
         {
-            mPaints = new Dictionary<string, SKPaint>();
+            _Paints = new Dictionary<string, SKPaint>();
             SKPaint paint;
 
             paint = new SKPaint()
@@ -33,7 +32,7 @@ namespace RectifierInfluenceStudy
                 TextAlign = SKTextAlign.Center,
                 TextSize = 25
             };
-            mPaints.Add("TitleText", paint);
+            _Paints.Add("TitleText", paint);
 
             paint = new SKPaint()
             {
@@ -41,7 +40,7 @@ namespace RectifierInfluenceStudy
                 Color = SKColors.LightSeaGreen,
                 IsStroke = true
             };
-            mPaints.Add("DataStartLine", paint);
+            _Paints.Add("DataStartLine", paint);
 
             paint = new SKPaint()
             {
@@ -49,7 +48,7 @@ namespace RectifierInfluenceStudy
                 Color = SKColors.White,
                 IsStroke = false
             };
-            mPaints.Add("GraphBackground", paint);
+            _Paints.Add("GraphBackground", paint);
 
             paint = new SKPaint()
             {
@@ -58,7 +57,7 @@ namespace RectifierInfluenceStudy
                 StrokeWidth = 2,
                 IsStroke = true
             };
-            mPaints.Add("MajorGridLine", paint);
+            _Paints.Add("MajorGridLine", paint);
 
             paint = new SKPaint()
             {
@@ -67,7 +66,7 @@ namespace RectifierInfluenceStudy
                 StrokeWidth = 1,
                 IsStroke = true
             };
-            mPaints.Add("MinorGridLine", paint);
+            _Paints.Add("MinorGridLine", paint);
         }
 
         public void DrawGraph(SKCanvas pCanvas, SKRect pCanvasRect)
@@ -80,11 +79,11 @@ namespace RectifierInfluenceStudy
                 Right = pCanvasRect.Width - 10,
                 Bottom = pCanvasRect.Height - 10
             };
-            pCanvas.DrawRect(view, mPaints["GraphBackground"]);
+            pCanvas.DrawRect(view, _Paints["GraphBackground"]);
             graphStart.MoveTo((float)DataSet.GraphTimeStart, 0);
             graphStart.LineTo((float)DataSet.GraphTimeStart, -2);
-            pCanvas.DrawPath(GetScaledPath(graphStart, GraphSize, view), mPaints["DataStartLine"]);
-            DrawHorizontalGridLines(pCanvas, GraphSize, view, 10, 5);
+            pCanvas.DrawPath(GetScaledPath(graphStart, GraphSize, view), _Paints["DataStartLine"]);
+            DrawGridLines(pCanvas, GraphSize, view, 10, 5, GridLineDirection.Horizontal);
             //canvas.DrawRect(0, 0, 25, 25, mBlackPaint);
             //if (mPath != null)
             //    canvas.DrawPath(GetScaledPath(mPath, 0, 120, -2, 0, e.Info.Rect), mBlackPaint);
@@ -92,36 +91,69 @@ namespace RectifierInfluenceStudy
             {
                 pCanvas.DrawPath(GetScaledPath(paths.Item2, GraphSize, view), paths.Item1);
             }
-            pCanvas.DrawText(DataSet.FileName, view.Width / 2 + view.Left, mPaints["TitleText"].TextSize + view.Top, mPaints["TitleText"]);
+            pCanvas.DrawText(DataSet.FileName, view.Width / 2 + view.Left, _Paints["TitleText"].TextSize + view.Top, _Paints["TitleText"]);
             pCanvas.Flush();
         }
 
-        private void DrawHorizontalGridLines(SKCanvas pCanvas, SKRect pGraphRect, SKRect pView, int pMajorCount, int pMinorCount)
+        private enum GridLineDirection
+        {
+            Horizontal,
+            Vertical
+        }
+
+        private void DrawGridLines(SKCanvas pCanvas, SKRect pGraphRect, SKRect pView, int pMajorCount, int pMinorCount, GridLineDirection pDirection)
         {
             SKPath majorPath = new SKPath();
             SKPath minorPath = new SKPath();
-            float majorY, minorY;
-            float minX = pGraphRect.Left;
-            float maxX = pGraphRect.Right;
-            float majorOffset = pGraphRect.Height / pMajorCount;
+            float major, minor, min, max, majorOffset;
+            if (pDirection == GridLineDirection.Horizontal)
+            {
+                min = pGraphRect.Left;
+                max = pGraphRect.Right;
+                majorOffset = pGraphRect.Height / pMajorCount;
+            }
+            else
+            {
+                min = pGraphRect.Top;
+                max = pGraphRect.Bottom;
+                majorOffset = pGraphRect.Width / pMajorCount;
+            }
             float minorOffset = majorOffset / pMinorCount;
             for (int i = 0; i <= pMajorCount; ++i)
             {
-                majorY = pGraphRect.Top + majorOffset * i;
-                majorPath.MoveTo(minX, majorY);
-                majorPath.LineTo(maxX, majorY);
+                if (pDirection == GridLineDirection.Horizontal)
+                {
+                    major = pGraphRect.Top + majorOffset * i;
+                    majorPath.MoveTo(min, major);
+                    majorPath.LineTo(max, major);
+                }
+                else
+                {
+                    major = pGraphRect.Left + majorOffset * i;
+                    majorPath.MoveTo(major, min);
+                    majorPath.LineTo(major, max);
+                }
+
                 if (i < pMajorCount)
                 {
                     for (int j = 0; j <= pMinorCount; ++j)
                     {
-                        minorY = majorY + minorOffset * j;
-                        minorPath.MoveTo(minX, minorY);
-                        minorPath.LineTo(maxX, minorY);
+                        minor = major + minorOffset * j;
+                        if (pDirection == GridLineDirection.Horizontal)
+                        {
+                            minorPath.MoveTo(min, minor);
+                            minorPath.LineTo(max, minor);
+                        }
+                        else
+                        {
+                            minorPath.MoveTo(minor, min);
+                            minorPath.LineTo(minor, max);
+                        }
                     }
                 }
             }
-            pCanvas.DrawPath(GetScaledPath(minorPath, pGraphRect, pView), mPaints["MinorGridLine"]);
-            pCanvas.DrawPath(GetScaledPath(majorPath, pGraphRect, pView), mPaints["MajorGridLine"]);
+            pCanvas.DrawPath(GetScaledPath(minorPath, pGraphRect, pView), _Paints["MinorGridLine"]);
+            pCanvas.DrawPath(GetScaledPath(majorPath, pGraphRect, pView), _Paints["MajorGridLine"]);
         }
 
         private SKPath GetScaledPath(SKPath pPath, SKRect pGraphRect, SKRect pCanvasRect)

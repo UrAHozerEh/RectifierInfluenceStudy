@@ -58,7 +58,7 @@ namespace RectifierInfluenceStudy.iOSTester
                 text.Color = SKColors.DarkRed;
                 //canvas.DrawText(_Scale.ToString(), 10, text.TextSize * 2, text);
                 int count = 2;
-                foreach (string line in _Graphs[_CurrentGraph].Output.Split('\n'))
+                foreach (string line in _Graphs[_CurrentGraph].DataSet.Output.Split('\n'))
                 {
                     canvas.DrawText(line, 10, text.TextSize * count, text);
                     ++count;
@@ -81,11 +81,13 @@ namespace RectifierInfluenceStudy.iOSTester
                 _PinchStart = null;
                 return;
             }
+
             if (pPinch.State == UIGestureRecognizerState.Began)
             {
                 CGPoint start = pPinch.LocationInView(null);
                 _PinchStart = new SKPoint((float)start.X, (float)start.Y);
             }
+
             CGPoint current = pPinch.LocationInView(null);
             _Offset = new SKPoint(Math.Max((float)(current.X - _PinchStart?.X), 0),
                                   Math.Max((float)(_PinchStart?.Y - current.Y), 0));
