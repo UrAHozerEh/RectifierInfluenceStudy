@@ -13,8 +13,13 @@ namespace RectifierInfluenceStudy
 
         public RISGraph(RISDataSet pDataSet)
         {
+            if (pDataSet == null)
+                return;
             DataSet = pDataSet;
-            GraphSize = new SKRect(0, 0, 120, -2);
+            int min = -3;
+            while (pDataSet.MinValueData < min)
+                min--;
+            GraphSize = new SKRect(0, 0, (float)pDataSet.GraphLength.TotalSeconds, min);
             InitializePaint();
         }
 
@@ -81,7 +86,7 @@ namespace RectifierInfluenceStudy
             };
             pCanvas.DrawRect(view, _Paints["GraphBackground"]);
             graphStart.MoveTo((float)DataSet.GraphTimeStart, 0);
-            graphStart.LineTo((float)DataSet.GraphTimeStart, -2);
+            graphStart.LineTo((float)DataSet.GraphTimeStart, GraphSize.Bottom);
             pCanvas.DrawPath(GetScaledPath(graphStart, GraphSize, view), _Paints["DataStartLine"]);
             DrawGridLines(pCanvas, GraphSize, view, 10, 5, GridLineDirection.Horizontal);
             //canvas.DrawRect(0, 0, 25, 25, mBlackPaint);
@@ -91,7 +96,7 @@ namespace RectifierInfluenceStudy
             {
                 pCanvas.DrawPath(GetScaledPath(paths.Item2, GraphSize, view), paths.Item1);
             }
-            pCanvas.DrawText(DataSet.FileName, view.Width / 2 + view.Left, _Paints["TitleText"].TextSize + view.Top, _Paints["TitleText"]);
+            //pCanvas.DrawText(DataSet.FileName, view.Width / 2 + view.Left, _Paints["TitleText"].TextSize + view.Top, _Paints["TitleText"]);
             pCanvas.Flush();
         }
 
