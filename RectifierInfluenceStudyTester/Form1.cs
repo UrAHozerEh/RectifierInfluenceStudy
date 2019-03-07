@@ -21,6 +21,7 @@ namespace RectifierInfluenceStudyTester
         public string Folder;
         public string[] Files;
         public bool Subfolders = false;
+        private Dictionary<string, double> _Offset;
 
         public Form1()
         {
@@ -37,6 +38,7 @@ namespace RectifierInfluenceStudyTester
             mGraph.Size = new Size(533, 292);
             Controls.Add(mGraph);
             mSets = new List<RISDataSet>();
+            
         }
 
         public void UpdateGraphs()
@@ -58,9 +60,9 @@ namespace RectifierInfluenceStudyTester
             DateTime start;
             mCurrentSet = 0;
             string output = "";
+            _Offset = new Dictionary<string, double>();
             foreach (string file in files)
             {
-
                 set = new RISDataSet(file, Cycle);
                 read = set.DataReads[0];
                 start = Cycle.GetNextCycleStart(read.UTCTime);
@@ -71,10 +73,16 @@ namespace RectifierInfluenceStudyTester
                 set.GetPaths();
                 output += set.FileName + "," + set.Output + "\n";
                 mSets.Add(set);
+                _Offset.Add(file, 0);
             }
             txtCycle.Text = mSets[mCurrentSet].FileName;
             mGraph.Graph = new RISGraph(mSets[mCurrentSet]);
             mGraph.Invalidate();
+            GraphForm graph = new GraphForm();
+            graph.Cycle = Cycle;
+            graph.Files = files;
+            graph.UpdateSets();
+            graph.Show();
         }
 
         public void UpdateValue(Read pRead, string pCycleName)

@@ -64,13 +64,13 @@
             this.txtCycle.Location = new System.Drawing.Point(93, 311);
             this.txtCycle.Multiline = true;
             this.txtCycle.Name = "txtCycle";
-            this.txtCycle.Size = new System.Drawing.Size(371, 60);
+            this.txtCycle.Size = new System.Drawing.Size(521, 60);
             this.txtCycle.TabIndex = 2;
             // 
             // btnUpdate
             // 
             this.btnUpdate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnUpdate.Location = new System.Drawing.Point(471, 331);
+            this.btnUpdate.Location = new System.Drawing.Point(621, 332);
             this.btnUpdate.Name = "btnUpdate";
             this.btnUpdate.Size = new System.Drawing.Size(75, 23);
             this.btnUpdate.TabIndex = 4;
@@ -82,7 +82,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(558, 383);
+            this.ClientSize = new System.Drawing.Size(708, 383);
             this.Controls.Add(this.btnUpdate);
             this.Controls.Add(this.txtCycle);
             this.Controls.Add(this.btnPrevious);

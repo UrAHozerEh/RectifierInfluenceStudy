@@ -33,8 +33,10 @@ namespace RectifierInfluenceStudy
         private Dictionary<int, List<GraphRead>> mGraphReads;
         public Dictionary<int, List<GraphRead>> GraphReads => mGraphReads;
         public string Output = "";
+        public string FullFileName;
+        public double Offset = 0;
 
-        public RISDataSet(string pFilePath, InterruptionCycle pInterruptionCycle)
+        public RISDataSet(string pFilePath, InterruptionCycle pInterruptionCycle, double pOffset = 0)
         {
             if (!File.Exists(pFilePath))
                 throw new ArgumentException("File does not exist!\n" + pFilePath);
@@ -47,6 +49,7 @@ namespace RectifierInfluenceStudy
             mGraphReads = new Dictionary<int, List<GraphRead>>();
             for (int i = 0; i < InterruptionCycle.Sets.Length; ++i)
                 mGraphReads.Add(i, new List<GraphRead>());
+            FullFileName = pFilePath;
             FileName = Path.GetFileNameWithoutExtension(pFilePath);
             _DataReads = new List<Read>();
             MaxValueData = float.MinValue;
@@ -117,7 +120,9 @@ namespace RectifierInfluenceStudy
 
         public void CreateGraphReads()
         {
-
+            mGraphReads = new Dictionary<int, List<GraphRead>>();
+            for (int i = 0; i < InterruptionCycle.Sets.Length; ++i)
+                mGraphReads.Add(i, new List<GraphRead>());
             if (!mIsMidCycleStartAllowed)
             {
                 GraphStart = InterruptionCycle.GetNextCycleStart(_DataReads[0].UTCTime);
@@ -133,7 +138,7 @@ namespace RectifierInfluenceStudy
             double readValue;
             bool hasReachedEnd = false;
             bool repeatToFill = false;
-            TimeSpan offset = new TimeSpan();
+            TimeSpan offset = new TimeSpan(TimeSpan.TicksPerMillisecond * (long)(Offset * 1000));
             do
             {
                 for (int i = 0; i < _DataReads.Count; ++i)
@@ -160,11 +165,11 @@ namespace RectifierInfluenceStudy
             double min = 9999, difference;
             double otherGraphTime;
             Read minRead = null;
-            foreach(Read read in _DataReads)
+            foreach (Read read in _DataReads)
             {
                 otherGraphTime = InterruptionCycle.GetGraphTime(GraphStart, read.UTCTime, mNumCycles);
                 difference = Math.Abs(otherGraphTime - pGraphTime);
-                if(difference < min)
+                if (difference < min)
                 {
                     minRead = read;
                     min = difference;
