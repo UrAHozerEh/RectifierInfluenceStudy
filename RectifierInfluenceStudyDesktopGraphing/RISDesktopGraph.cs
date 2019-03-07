@@ -4,8 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using SkiaSharp;
-using SkiaSharp.Views.Desktop;
+
 
 namespace RectifierInfluenceStudy.DesktopGraphing
 {

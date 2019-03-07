@@ -1,6 +1,5 @@
 ﻿using System;
 using RectifierInfluenceStudy;
-using RectifierInfluenceStudy.DesktopGraphing;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;

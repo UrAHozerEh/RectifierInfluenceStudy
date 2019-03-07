@@ -17,8 +17,14 @@ namespace RectifierInfluenceStudyTester
         public string Folder;
         public string[] Files;
         private Dictionary<string, double> _Offset;
+        private Dictionary<string, bool> _Approved;
         private List<RISDataSet> _Sets;
         public InterruptionCycle Cycle;
+        private double _Minimum = double.MaxValue;
+        private double _Maximum = double.MinValue;
+        private double _SpanMin = double.MaxValue;
+        private double _SpanMax = double.MinValue;
+        private bool _AutoScale = true;
 
         public GraphForm()
         {
@@ -30,17 +36,52 @@ namespace RectifierInfluenceStudyTester
         {
             _Sets = new List<RISDataSet>();
             _Offset = new Dictionary<string, double>();
+            _Approved = new Dictionary<string, bool>();
             ListFiles.Items.Clear();
             foreach (string file in Files)
             {
                 RISDataSet set = new RISDataSet(file, Cycle);
+                if (set.FileName.ToLower().Contains("span"))
+                {
+                    if (set.MinValueData < _SpanMin)
+                        _SpanMin = set.MinValueData;
+                    if (set.MaxValueData > _SpanMax)
+                        _SpanMax = set.MaxValueData;
+                }
+                else
+                {
+                    if (set.MinValueData < _Minimum)
+                        _Minimum = set.MinValueData;
+                    if (set.MaxValueData > _Maximum)
+                        _Maximum = set.MaxValueData;
+                }
                 _Sets.Add(set);
                 _Offset.Add(set.FullFileName, 0);
+                _Approved.Add(set.FullFileName, false);
                 ListFiles.Items.Add(set.FileName);
             }
+            if (_Maximum < 0)
+                _Maximum = 0;
+            double range = Math.Abs(_Minimum - _Maximum);
+            _Minimum = _Minimum - range * 0.1;
+            if (_Maximum != 0)
+                _Maximum = _Maximum + range * 0.1;
+
+            range = Math.Abs(_SpanMin - _SpanMax);
+            _SpanMin = _SpanMin - range * 0.1;
+            _SpanMax = _SpanMax + range * 0.1;
+            if (Math.Abs(_SpanMin) > Math.Abs(_SpanMax))
+                _SpanMax = 0 - _SpanMin;
+            else
+                _SpanMin = 0 - _SpanMax;
             ChartArea area = Chart.ChartAreas[0];
             area.AxisX.Minimum = 0;
             area.AxisX.Maximum = Cycle.Length.TotalSeconds;
+            if (!_AutoScale)
+            {
+                area.AxisY.Maximum = _Maximum;
+                area.AxisY.Minimum = _Minimum;
+            }
             area.AxisY.IsReversed = true;
             ListFiles.SelectedIndex = 0;
         }
@@ -51,6 +92,20 @@ namespace RectifierInfluenceStudyTester
             Chart.Series.Clear();
             //TextOffset.Text = _Offset[_Sets[pIndex].FullFileName].ToString("F1");
             if (series == null) return;
+            ChartArea area = Chart.ChartAreas[0];
+            if (!_AutoScale)
+            {
+                if (_Sets[pIndex].FileName.ToLower().Contains("span"))
+                {
+                    area.AxisY.Maximum = _SpanMax;
+                    area.AxisY.Minimum = _SpanMin;
+                }
+                else
+                {
+                    area.AxisY.Maximum = _Maximum;
+                    area.AxisY.Minimum = _Minimum;
+                }
+            }
             foreach (Series s in series)
             {
                 Chart.Series.Add(s);

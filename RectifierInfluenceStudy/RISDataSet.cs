@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using SkiaSharp;
 
 namespace RectifierInfluenceStudy
 {
@@ -123,13 +122,14 @@ namespace RectifierInfluenceStudy
             mGraphReads = new Dictionary<int, List<GraphRead>>();
             for (int i = 0; i < InterruptionCycle.Sets.Length; ++i)
                 mGraphReads.Add(i, new List<GraphRead>());
+            TimeSpan offset = new TimeSpan(TimeSpan.TicksPerMillisecond * (long)(Offset * 1000));
             if (!mIsMidCycleStartAllowed)
             {
                 GraphStart = InterruptionCycle.GetNextCycleStart(_DataReads[0].UTCTime);
             }
             else
             {
-                GraphStart = _DataReads[0].UTCTime;
+                GraphStart = _DataReads[0].UTCTime.Add(offset);
             }
             GraphEnd = GraphStart.AddSeconds(InterruptionCycle.Length.TotalSeconds * mNumCycles);
 
@@ -138,7 +138,6 @@ namespace RectifierInfluenceStudy
             double readValue;
             bool hasReachedEnd = false;
             bool repeatToFill = false;
-            TimeSpan offset = new TimeSpan(TimeSpan.TicksPerMillisecond * (long)(Offset * 1000));
             do
             {
                 for (int i = 0; i < _DataReads.Count; ++i)
@@ -176,165 +175,6 @@ namespace RectifierInfluenceStudy
                 }
             }
             return minRead;
-        }
-
-        public List<Tuple<SKPaint, SKPath>> GetPaths()
-        {
-            var paths = new List<Tuple<SKPaint, SKPath>>();
-            bool fillUnder = false;
-            double prev = 0;
-            List<GraphRead> combined = new List<GraphRead>();
-            foreach (int i in mGraphReads.Keys)
-            {
-                combined.AddRange(mGraphReads[i]);
-            }
-            combined.Sort();
-            SKPath path = null;
-            foreach (GraphRead read in combined)
-            {
-                if (path == null)
-                {
-                    path = new SKPath();
-                    path.MoveTo((float)read.Time, (float)read.Value);
-                    prev = read.Time;
-                    continue;
-                }
-                if (Math.Abs(read.Time - prev) > 1)
-                {
-                    path.MoveTo((float)read.Time, (float)read.Value);
-                    prev = read.Time;
-                    continue;
-                }
-                prev = read.Time;
-                path.LineTo((float)read.Time, (float)read.Value);
-            }
-            SKPaint paint = new SKPaint()
-            {
-                Color = SKColors.Blue,
-                StrokeWidth = 1,
-                IsStroke = true,
-                IsAntialias = true
-            };
-            paths.Add(new Tuple<SKPaint, SKPath>(paint, path));
-            path = null;
-
-            paint = new SKPaint()
-            {
-                Color = SKColors.Orange,
-                StrokeWidth = 1,
-                IsStroke = true,
-                IsAntialias = true
-            };
-            for (int i = 1; i < mGraphReads.Keys.Count; ++i)
-            {
-                if (mGraphReads[i].Count == 0)
-                    continue;
-                foreach (GraphRead read in mGraphReads[i])
-                {
-                    if (path == null)
-                    {
-                        path = new SKPath();
-                        path.MoveTo((float)read.Time, (float)read.Value);
-                        prev = read.Time;
-                        continue;
-                    }
-                    if (Math.Abs(read.Time - prev) > 1)
-                    {
-                        path.MoveTo((float)read.Time, (float)read.Value);
-                        prev = read.Time;
-                        continue;
-                    }
-                    prev = read.Time;
-                    path.LineTo((float)read.Time, (float)read.Value);
-                }
-                paths.Add(new Tuple<SKPaint, SKPath>(paint, path));
-                path = null;
-            }
-
-            SKPaint goodPaint = new SKPaint()
-            {
-                Color = SKColors.Green,
-                StrokeWidth = 3,
-                IsStroke = !fillUnder,
-                IsAntialias = true
-            };
-            SKPaint badPaint = new SKPaint()
-            {
-                Color = SKColors.Red,
-                StrokeWidth = 3,
-                IsStroke = !fillUnder,
-                IsAntialias = true
-            };
-
-            List<GraphRead> reads;
-            float median = 0;
-            float otherMedian = 0;
-            float first = 0;
-            float last = 0;
-
-            Output = "";
-            if (fillUnder)
-            {
-                foreach (int i in mGraphReads.Keys)
-                {
-                    reads = new List<GraphRead>(mGraphReads[i]);
-                    if (i == 0)
-                    {
-                        reads.Sort((r1, r2) => r1.Value.CompareTo(r2.Value));
-                        median = (float)reads[reads.Count / 2].Value;
-                        continue;
-                    }
-                    reads.Sort();
-                    foreach (GraphRead read in reads)
-                    {
-                        if (path == null)
-                        {
-                            path = new SKPath();
-                            first = (float)read.Time;
-                            prev = read.Time;
-                            path.MoveTo((float)read.Time, (float)read.Value);
-                            continue;
-                        }
-                        if (Math.Abs(read.Time - prev) > 1)
-                        {
-                            if (fillUnder)
-                            {
-                                path.LineTo(last, median);
-                                path.LineTo(first, median);
-                                path.Close();
-                            }
-                            first = (float)read.Time;
-                            prev = read.Time;
-                            path.MoveTo((float)read.Time, (float)read.Value);
-                            continue;
-                        }
-                        last = (float)read.Time;
-                        path.LineTo((float)read.Time, (float)read.Value);
-                        prev = read.Time;
-                    }
-
-                    reads.Sort((r1, r2) => r1.Value.CompareTo(r2.Value));
-                    if (reads.Count != 0)
-                        otherMedian = (float)reads[reads.Count / 2].Value;
-                    else
-                        otherMedian = 0;
-
-                    if (fillUnder)
-                    {
-                        path.LineTo(last, median);
-                        path.LineTo(first, median);
-                        path.Close();
-                    }
-                    paint = (otherMedian > median ? goodPaint : badPaint);
-                    Output += $"{Math.Round(otherMedian - median, 3) * 1000},";
-                    if (Math.Abs(otherMedian - median) > 0.005)
-                        paths.Add(new Tuple<SKPaint, SKPath>(paint, path));
-                    path = null;
-                }
-            }
-            if (Output.Length != 0)
-                Output = Output.Substring(0, Output.Length - 1);
-            return paths;
         }
     }
 }

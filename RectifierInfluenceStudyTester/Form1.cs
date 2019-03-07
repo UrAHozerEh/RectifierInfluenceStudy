@@ -1,5 +1,4 @@
 ﻿using RectifierInfluenceStudy;
-using RectifierInfluenceStudy.DesktopGraphing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -12,9 +11,8 @@ using System.Windows.Forms;
 
 namespace RectifierInfluenceStudyTester
 {
-    public partial class Form1 : Form, IGraphWatcher
+    public partial class Form1 : Form
     {
-        private RISDesktopGraph mGraph;
         private int mCurrentSet;
         private List<RISDataSet> mSets;
         public InterruptionCycle Cycle;
@@ -32,11 +30,6 @@ namespace RectifierInfluenceStudyTester
             //for (int i = 1; i <= 23; ++i)
             //    cycleNames[i - 1] = "Cycle " + i;
             //InterruptionCycle cycle = new MultiSetInterruptionCycle("Testing Set 1", 14, 5, 2, cycleNames);
-            mGraph = new RISDesktopGraph(null, this);
-            mGraph.Location = new Point(13, 13);
-            mGraph.Anchor = (AnchorStyles.Bottom | AnchorStyles.Right | AnchorStyles.Left | AnchorStyles.Top);
-            mGraph.Size = new Size(533, 292);
-            Controls.Add(mGraph);
             mSets = new List<RISDataSet>();
             
         }
@@ -70,14 +63,11 @@ namespace RectifierInfluenceStudyTester
                     min = set.MinValueData;
                 if (set.MaxValueData > max)
                     max = set.MaxValueData;
-                set.GetPaths();
                 output += set.FileName + "," + set.Output + "\n";
                 mSets.Add(set);
                 _Offset.Add(file, 0);
             }
             txtCycle.Text = mSets[mCurrentSet].FileName;
-            mGraph.Graph = new RISGraph(mSets[mCurrentSet]);
-            mGraph.Invalidate();
             GraphForm graph = new GraphForm();
             graph.Cycle = Cycle;
             graph.Files = files;
@@ -98,8 +88,7 @@ namespace RectifierInfluenceStudyTester
             ++mCurrentSet;
             if (mCurrentSet == mSets.Count)
                 mCurrentSet = 0;
-            mGraph.Graph = new RISGraph(mSets[mCurrentSet]);
-            mGraph.Invalidate();
+            //mGraph.Graph = new RISGraph(mSets[mCurrentSet]);
             txtCycle.Text = mSets[mCurrentSet].FileName;
         }
 
@@ -110,8 +99,7 @@ namespace RectifierInfluenceStudyTester
             --mCurrentSet;
             if (mCurrentSet == -1)
                 mCurrentSet = mSets.Count - 1;
-            mGraph.Graph = new RISGraph(mSets[mCurrentSet]);
-            mGraph.Invalidate();
+            //mGraph.Graph = new RISGraph(mSets[mCurrentSet]);
             txtCycle.Text = mSets[mCurrentSet].FileName;
         }
 
