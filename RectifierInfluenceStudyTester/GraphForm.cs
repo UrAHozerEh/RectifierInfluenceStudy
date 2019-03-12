@@ -16,6 +16,7 @@ using SeriesForm = System.Windows.Forms.DataVisualization.Charting.Series;
 using FontForm = System.Drawing.Font;
 using ExcelApplication = Microsoft.Office.Interop.Excel.Application;
 using ExcelChart = Microsoft.Office.Interop.Excel.Chart;
+using ExcelAxis = Microsoft.Office.Interop.Excel.Axis;
 
 namespace RectifierInfluenceStudyTester
 {
@@ -226,28 +227,44 @@ namespace RectifierInfluenceStudyTester
         private void GraphForm_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar == 'a')
-                CheckApproved.Checked = true;
+                CheckApproved.Checked = !CheckApproved.Checked;
+            if (e.KeyChar == 'v')
+            {
+                double offset;
+                if (!double.TryParse(Clipboard.GetText(), out offset)) return;
+                TextOffset.Text = offset + "";
+            }
         }
 
         private void ButtonExportOne_Click(object sender, EventArgs e)
         {
             RISDataSet set = _Sets[SelectedIndex];
             ExcelExport(set);
+            MessageBox.Show("Done!");
         }
 
         private void ExcelExport(RISDataSet pSet)
         {
-            string fileName = Path.ChangeExtension(pSet.FullFileName, ".xlsx");
+            string excelFileName = Path.ChangeExtension(pSet.FullFileName, ".xlsx");
+            string pdfFileName = Path.ChangeExtension(pSet.FullFileName, ".pdf");
             Workbook workbook = _Excel.Workbooks.Add(Type.Missing);
             Worksheet worksheet = workbook.ActiveSheet as Worksheet;
 
             worksheet.Name = "Data";
 
             List<SeriesForm> series = CreateSeries(pSet);
+            object[,] data = new object[series[0].Points.Count + 1, series.Count + 1];
             int cycleNum = 1;
             double lastX = double.MinValue;
-            int row = 2;
+            int row = 1;
             int pointIndex = 0;
+            int columns = series.Count + 1;
+
+            data[0, 0] = "Time (Seconds)";
+            for (int i = 0; i < series.Count; ++i)
+            {
+                data[0, 1 + i] = series[i].Name;
+            }
 
             foreach (DataPoint point in series[0].Points)
             {
@@ -256,33 +273,74 @@ namespace RectifierInfluenceStudyTester
                     ++cycleNum;
                     pointIndex = 0;
                 }
-                if (cycleNum < series.Count && point.XValue == series[cycleNum].Points[pointIndex].XValue)
+                if (cycleNum < series.Count && series[cycleNum].Points.Count > pointIndex && point.XValue == series[cycleNum].Points[pointIndex].XValue)
                 {
-                    worksheet.Cells[row, cycleNum + 2] = series[cycleNum].Points[pointIndex].YValues[0];
+                    data[row, cycleNum + 1] = series[cycleNum].Points[pointIndex].YValues[0];
+                    //worksheet.Cells[row, cycleNum + 2] = series[cycleNum].Points[pointIndex].YValues[0];
                     ++pointIndex;
                 }
                 if (point.XValue < lastX)
                     continue;
-                worksheet.Cells[row, 1] = point.XValue;
-                worksheet.Cells[row, 2] = point.YValues[0];
+                data[row, 0] = point.XValue;
+                data[row, 1] = point.YValues[0];
+                //worksheet.Cells[row, 1] = point.XValue;
+                //worksheet.Cells[row, 2] = point.YValues[0];
                 ++row;
                 lastX = point.XValue;
             }
-            Range range = worksheet.Range[worksheet.Cells[1, 1], worksheet.Cells[row - 1, series.Count + 1]];
+            Range dataRange = worksheet.Range[worksheet.Cells[1, 1], worksheet.Cells[row + 1, series.Count + 1]];
+            dataRange.Value = data;
+            Range chartRange = worksheet.Range[worksheet.Cells[1, 1], worksheet.Cells[row + 1, series.Count + 1]];
             ExcelChart chart = workbook.Charts.Add(Type.Missing) as ExcelChart;
             chart.Name = "Chart";
-            chart.ChartType = XlChartType.xlLine;
+            chart.ChartType = XlChartType.xlXYScatterLinesNoMarkers;
             chart.ChartStyle = 227;
-            chart.SetSourceData(range);
+            chart.SetSourceData(chartRange);
             chart.HasTitle = true;
             chart.ChartTitle.Text = pSet.FileName;
+            chart.ChartArea.Border.LineStyle = XlLineStyle.xlLineStyleNone;
+            chart.Legend.Position = XlLegendPosition.xlLegendPositionTop;
 
+            ExcelAxis yAxis = chart.Axes(XlAxisType.xlValue);
+            yAxis.ReversePlotOrder = true;
+            yAxis.HasMinorGridlines = true;
+            yAxis.MinorTickMark = XlTickMark.xlTickMarkCross;
+            yAxis.HasTitle = true;
+            yAxis.AxisTitle.Text = "Pipe-to-Soil Potenital (Volts)";
+            if (pSet.MaxValueData < 0)
+                yAxis.MaximumScale = 0;
 
+            ExcelAxis xAxis = chart.Axes(XlAxisType.xlCategory);
+            xAxis.MajorUnitIsAuto = false;
+            xAxis.MajorUnit = 20;
+            xAxis.TickLabelPosition = XlTickLabelPosition.xlTickLabelPositionLow;
+            xAxis.MaximumScaleIsAuto = false;
+            xAxis.MaximumScale = Cycle.Length.TotalSeconds;
+            xAxis.HasMajorGridlines = true;
+            xAxis.HasTitle = true;
+            xAxis.AxisTitle.Text = "Time (Seconds)";
 
-            workbook.SaveAs(fileName);
+            chart.PageSetup.RightFooter = $"{pSet.TimeStart.ToShortDateString()} {pSet.TimeStart.ToLongTimeString()}\n";
+            chart.PageSetup.RightFooter += $"GPS: {pSet.Latitude.ToString("F8")},{pSet.Longitude.ToString("F8")},{pSet.Altitude}";
+            chart.PageSetup.TopMargin = 0.1;
+
+            workbook.SaveAs(excelFileName);
+            chart.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, pdfFileName, XlFixedFormatQuality.xlQualityStandard, true, false);
             workbook.Close();
             worksheet = null;
             workbook = null;
+        }
+
+        private void ButtonExportApproved_Click(object sender, EventArgs e)
+        {
+            int count = 0;
+            foreach (RISDataSet set in _Sets)
+                if (_Approved[set.FullFileName])
+                {
+                    ExcelExport(set);
+                    ++count;
+                }
+            MessageBox.Show($"Done exporting {count} files!");
         }
     }
 }

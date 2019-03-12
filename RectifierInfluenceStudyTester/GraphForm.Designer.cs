@@ -34,10 +34,10 @@
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.Chart = new System.Windows.Forms.DataVisualization.Charting.Chart();
-            this.TextOffset = new System.Windows.Forms.TextBox();
-            this.CheckApproved = new System.Windows.Forms.CheckBox();
             this.ListFiles = new System.Windows.Forms.ListView();
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.TextOffset = new System.Windows.Forms.TextBox();
+            this.CheckApproved = new System.Windows.Forms.CheckBox();
             this.ButtonExportOne = new System.Windows.Forms.Button();
             this.ButtonExportApproved = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
@@ -96,27 +96,6 @@
             this.Chart.TabIndex = 0;
             this.Chart.Text = "chart1";
             // 
-            // TextOffset
-            // 
-            this.TextOffset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.TextOffset.Location = new System.Drawing.Point(7, 370);
-            this.TextOffset.Name = "TextOffset";
-            this.TextOffset.Size = new System.Drawing.Size(100, 20);
-            this.TextOffset.TabIndex = 1;
-            this.TextOffset.TextChanged += new System.EventHandler(this.TextOffset_TextChanged);
-            // 
-            // CheckApproved
-            // 
-            this.CheckApproved.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.CheckApproved.AutoSize = true;
-            this.CheckApproved.Location = new System.Drawing.Point(7, 329);
-            this.CheckApproved.Name = "CheckApproved";
-            this.CheckApproved.Size = new System.Drawing.Size(72, 17);
-            this.CheckApproved.TabIndex = 2;
-            this.CheckApproved.Text = "Approved";
-            this.CheckApproved.UseVisualStyleBackColor = true;
-            this.CheckApproved.CheckedChanged += new System.EventHandler(this.CheckApproved_CheckedChanged);
-            // 
             // ListFiles
             // 
             this.ListFiles.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -138,6 +117,27 @@
             // 
             this.columnHeader2.Width = 999;
             // 
+            // TextOffset
+            // 
+            this.TextOffset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.TextOffset.Location = new System.Drawing.Point(7, 370);
+            this.TextOffset.Name = "TextOffset";
+            this.TextOffset.Size = new System.Drawing.Size(100, 20);
+            this.TextOffset.TabIndex = 1;
+            this.TextOffset.TextChanged += new System.EventHandler(this.TextOffset_TextChanged);
+            // 
+            // CheckApproved
+            // 
+            this.CheckApproved.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.CheckApproved.AutoSize = true;
+            this.CheckApproved.Location = new System.Drawing.Point(7, 329);
+            this.CheckApproved.Name = "CheckApproved";
+            this.CheckApproved.Size = new System.Drawing.Size(72, 17);
+            this.CheckApproved.TabIndex = 2;
+            this.CheckApproved.Text = "Approved";
+            this.CheckApproved.UseVisualStyleBackColor = true;
+            this.CheckApproved.CheckedChanged += new System.EventHandler(this.CheckApproved_CheckedChanged);
+            // 
             // ButtonExportOne
             // 
             this.ButtonExportOne.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -158,6 +158,7 @@
             this.ButtonExportApproved.TabIndex = 4;
             this.ButtonExportApproved.Text = "Export Approved";
             this.ButtonExportApproved.UseVisualStyleBackColor = true;
+            this.ButtonExportApproved.Click += new System.EventHandler(this.ButtonExportApproved_Click);
             // 
             // GraphForm
             // 

@@ -57,6 +57,31 @@ namespace RectifierInfluenceStudyTester
             {
                 names[i - 1] = "Cycle " + i;
             }
+
+            names[0] = "TW Rainbow Valley Off";
+            names[1] = "TW Gila River MS Off";
+            names[2] = "TW Gila River Off";
+            names[3] = "TW Arlington MS Off";
+            names[4] = "EPNG-1433 Off";
+            names[5] = "EPNG-1190 Off";
+            names[6] = "EPNG-1316 Off";
+            names[7] = "EPNG-1471 Off";
+            names[8] = "EPNG-1129 Off";
+            names[9] = "EPNG-2036 Off";
+            names[10] = "EPNG-240 Off";
+            names[11] = "EPNG-1924 Off";
+            names[12] = "EPNG-1579 Off";
+            names[13] = "EPNG-1014 Off";
+            names[14] = "EPNG-2069 Off";
+            names[15] = "EPNG-1015 Off";
+            names[16] = "EPNG-1974 Off";
+            names[17] = "EPNG-1435 Off";
+            names[18] = "EPNG-1971 Off";
+            names[19] = "Unused";
+            names[20] = "SWG Off";
+            names[21] = "EXEL Off";
+            names[22] = "Other Off";
+
             InterruptionCycle cycle = new MultiSetInterruptionCycle("", on, off, delay, names);
             _Form.Cycle = cycle;
             if(string.IsNullOrWhiteSpace(txtFolder.Text))
