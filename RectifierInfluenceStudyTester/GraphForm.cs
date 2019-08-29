@@ -52,6 +52,7 @@ namespace RectifierInfluenceStudyTester
             _Offset = new Dictionary<string, double>();
             _Approved = new Dictionary<string, bool>();
             ListFiles.Items.Clear();
+            string csv = "Latitude,Longitude,Name";
             foreach (string file in Files)
             {
                 RISDataSet set = new RISDataSet(file, Cycle);
@@ -69,11 +70,13 @@ namespace RectifierInfluenceStudyTester
                     if (set.MaxValueData > _Maximum)
                         _Maximum = set.MaxValueData;
                 }
+                csv += $"{set.Latitude},{set.Longitude},{set.FileName}\n";
                 _Sets.Add(set);
                 _Offset.Add(set.FullFileName, 0);
                 _Approved.Add(set.FullFileName, false);
                 ListFiles.Items.Add(set.FileName);
             }
+            Clipboard.SetText(csv.Trim());
             if (_Maximum < 0)
                 _Maximum = 0;
             double range = Math.Abs(_Minimum - _Maximum);
@@ -306,7 +309,7 @@ namespace RectifierInfluenceStudyTester
             yAxis.HasMinorGridlines = true;
             yAxis.MinorTickMark = XlTickMark.xlTickMarkCross;
             yAxis.HasTitle = true;
-            yAxis.AxisTitle.Text = "Pipe-to-Soil Potenital (Volts)";
+            yAxis.AxisTitle.Text = (pSet.FileName.ToLower().Contains("span") ? "Current Span" : "Pipe-to-Soil Potenital") + " (Volts)";
             if (pSet.MaxValueData < 0)
                 yAxis.MaximumScale = 0;
 
@@ -334,6 +337,8 @@ namespace RectifierInfluenceStudyTester
         private void ButtonExportApproved_Click(object sender, EventArgs e)
         {
             int count = 0;
+            StringBuilder output = new StringBuilder();
+            output.AppendLine("");
             foreach (RISDataSet set in _Sets)
                 if (_Approved[set.FullFileName])
                 {

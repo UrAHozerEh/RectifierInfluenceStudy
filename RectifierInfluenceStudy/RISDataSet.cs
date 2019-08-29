@@ -31,6 +31,9 @@ namespace RectifierInfluenceStudy
         private bool mIsMidCycleStartAllowed;
         private Dictionary<int, List<GraphRead>> mGraphReads;
         public Dictionary<int, List<GraphRead>> GraphReads => mGraphReads;
+
+        public Dictionary<int, double> Averages { get; private set; }
+
         public string Output = "";
         public string FullFileName;
         public double Offset = 0;
@@ -46,6 +49,7 @@ namespace RectifierInfluenceStudy
                 mNumCycles = 20;
             mIsMidCycleStartAllowed = true;
             mGraphReads = new Dictionary<int, List<GraphRead>>();
+            Averages = new Dictionary<int, double>();
             for (int i = 0; i < InterruptionCycle.Sets.Length; ++i)
                 mGraphReads.Add(i, new List<GraphRead>());
             FullFileName = pFilePath;
@@ -54,7 +58,7 @@ namespace RectifierInfluenceStudy
             MaxValueData = float.MinValue;
             MinValueData = float.MaxValue;
 
-            switch (Path.GetExtension(pFilePath))
+            switch (Path.GetExtension(pFilePath).ToLower())
             {
                 case ".csv":
                     ReadMcMilleriBTVMFile(pFilePath);
@@ -157,6 +161,39 @@ namespace RectifierInfluenceStudy
                 }
                 offset = offset.Add(InterruptionCycle.Length);
             } while (!hasReachedEnd && repeatToFill);
+        }
+
+        public Dictionary<int, double> GenerateAverages()
+        {
+            Dictionary<int, double> averages = new Dictionary<int, double>();
+            Dictionary<int, double> sum = new Dictionary<int, double>();
+            Dictionary<int, double> count = new Dictionary<int, double>();
+            TimeSpan offset = new TimeSpan(TimeSpan.TicksPerMillisecond * (long)(Offset * 1000));
+            DateTime time;
+            int setPosition;
+            double readValue;
+            for (int i = 0; i < _DataReads.Count; ++i)
+            {
+                time = _DataReads[i].UTCTime.Add(offset);
+                readValue = _DataReads[i].Value;
+                setPosition = InterruptionCycle.GetSetPosition(time);
+                if(count.ContainsKey(setPosition))
+                {
+                    ++count[setPosition];
+                    sum[setPosition] += readValue;
+                }
+                else
+                {
+                    count.Add(setPosition, 1);
+                    sum.Add(setPosition, readValue);
+                }
+            }
+
+            foreach(int set in count.Keys)
+            {
+                averages.Add(set, sum[set] / count[set]);
+            }
+            return averages;
         }
 
         public Read GetReadFromGraphTime(double pGraphTime)
