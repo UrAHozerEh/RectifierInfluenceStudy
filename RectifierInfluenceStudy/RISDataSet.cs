@@ -115,6 +115,13 @@ namespace RectifierInfluenceStudy
                     }
                 }
             }
+            var skippedSeconds = 0;
+            for(int i = 1; i < _DataReads.Count; ++i)
+            {
+                var timeSpan = _DataReads[i].UTCTime - _DataReads[i - 1].UTCTime;
+                if (timeSpan.TotalSeconds > 1)
+                    ++skippedSeconds;
+            }
             TimeStart = _DataReads[0].UTCTime;
             TimeEnd = _DataReads[_DataReads.Count - 1].UTCTime;
             CreateGraphReads();

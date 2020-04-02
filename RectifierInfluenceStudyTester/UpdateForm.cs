@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 
 namespace RectifierInfluenceStudyTester
 {
@@ -59,14 +60,15 @@ namespace RectifierInfluenceStudyTester
             }
             if (names.Length == 14)
             {
-                names[0] = "EPNG CPS 108-5";
-                names[1] = "EPNG CPS 1668";
-                names[2] = "EPNG CPS 140";
-                names[3] = "EPNG CPS 2331";
-                names[4] = "EPNG CPS 185-P";
-                names[5] = "EPNG CPS 808";
-                names[6] = "QUESTAR B-52";
-                names[7] = "QUESTAR B-58";
+                names[0] = "Evan Hewes";
+                names[1] = "Dunaway";
+                names[2] = "Foxglove";
+                names[3] = "Derrick";
+                names[4] = "Sillsbee";
+                names[5] = "Ross";
+                names[6] = "Nichols";
+                names[7] = "Villa";
+                names[8] = "Sly Rec 2";
             }
 
             InterruptionCycle cycle = new MultiSetInterruptionCycle("", on, off, delay, names);
@@ -139,6 +141,50 @@ namespace RectifierInfluenceStudyTester
                     txtFiles.Text = _Files[0].Split('\\').Last();
                 else
                     txtFiles.Text = $"Selected {_Files.Length} files.";
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Filter = "*.txt | *.txt";
+            dialog.Multiselect = false;
+            DialogResult result = dialog.ShowDialog();
+            if (result != DialogResult.Cancel)
+            {
+                double on, off, delay;
+                string[] names;
+                InterruptionCycle cycle = null;
+                List<string> fileLines = new List<string>();
+                using (StreamReader sr = new StreamReader(dialog.OpenFile()))
+                {
+                    while(!sr.EndOfStream)
+                    {
+                        fileLines.Add(sr.ReadLine());
+                    }
+                    on = double.Parse(fileLines[4]);
+                    off = double.Parse(fileLines[5]);
+                    delay = double.Parse(fileLines[6]);
+                    names = fileLines[3].Split(',');
+                    cycle = new MultiSetInterruptionCycle("", on, off, delay, names);
+                }
+
+                if (cycle == null)
+                    return;
+                _Form.Cycle = cycle;
+                if (string.IsNullOrWhiteSpace(txtFolder.Text))
+                {
+                    _Form.Folder = "";
+                    _Form.Files = _Files;
+                }
+                else
+                {
+                    _Form.Folder = txtFolder.Text;
+                    _Form.Files = null;
+                }
+                _Form.Subfolders = chkSubfolders.Checked;
+                _Form.UpdateGraphs();
+                Close();
             }
         }
     }
