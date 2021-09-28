@@ -80,13 +80,13 @@ namespace RectifierInfluenceStudyTester
             if (_Maximum < 0)
                 _Maximum = 0;
             double range = Math.Abs(_Minimum - _Maximum);
-            _Minimum = _Minimum - range * 0.1;
+            _Minimum -= range * 0.1;
             if (_Maximum != 0)
-                _Maximum = _Maximum + range * 0.1;
+                _Maximum += range * 0.1;
 
             range = Math.Abs(_SpanMin - _SpanMax);
-            _SpanMin = _SpanMin - range * 0.1;
-            _SpanMax = _SpanMax + range * 0.1;
+            _SpanMin -= range * 0.1;
+            _SpanMax += range * 0.1;
             if (Math.Abs(_SpanMin) > Math.Abs(_SpanMax))
                 _SpanMax = 0 - _SpanMin;
             else
@@ -143,8 +143,10 @@ namespace RectifierInfluenceStudyTester
             MultiSetInterruptionCycle cycle = Cycle as MultiSetInterruptionCycle;
             foreach (RectifierSet set in cycle.Sets)
             {
-                SeriesForm s = new SeriesForm(set.Name);
-                s.ChartType = SeriesChartType.Line;
+                SeriesForm s = new SeriesForm(set.Name)
+                {
+                    ChartType = SeriesChartType.Line
+                };
                 if (set.Name != "All On")
                     s.BorderWidth = 3;
                 else
@@ -188,14 +190,13 @@ namespace RectifierInfluenceStudyTester
             if (SelectedIndex == -1)
                 return;
             ChangeToSet(SelectedIndex);
-            TextOffset.Text = _Offset[SelectedFullName].ToString("F1");
+            TextOffset.Text = _Offset[SelectedFullName].ToString("F2");
         }
 
         private void TextOffset_TextChanged(object sender, EventArgs e)
         {
-            double offset;
             string text = TextOffset.Text;
-            if (string.IsNullOrWhiteSpace(text) || !double.TryParse(text, out offset))
+            if (string.IsNullOrWhiteSpace(text) || !double.TryParse(text, out double offset))
                 return;
             if (_Offset[SelectedFullName] == offset)
                 return;
@@ -218,7 +219,7 @@ namespace RectifierInfluenceStudyTester
             if (SelectedIndex == -1)
                 return;
             ChangeToSet(SelectedIndex);
-            TextOffset.Text = _Offset[SelectedFullName].ToString("F1");
+            TextOffset.Text = _Offset[SelectedFullName].ToString("F2");
             FontForm font = new FontForm(ListFiles.Items[SelectedIndex].Font, FontStyle.Bold);
             if (_OldIndex != -1)
                 ListFiles.Items[_OldIndex].Font = ListFiles.Items[SelectedIndex].Font;
@@ -246,12 +247,15 @@ namespace RectifierInfluenceStudyTester
             MessageBox.Show("Done!");
         }
 
-        private void ExcelExport(RISDataSet pSet)
+        private void ExcelExport(RISDataSet pSet, bool isVolts = true)
         {
+            if (pSet.MinValueData > -0.1)
+                isVolts = false;
             string excelFileName = Path.ChangeExtension(pSet.FullFileName, ".xlsx");
             string pdfFileName = Path.ChangeExtension(pSet.FullFileName, ".pdf");
             Workbook workbook = _Excel.Workbooks.Add(Type.Missing);
             Worksheet worksheet = workbook.ActiveSheet as Worksheet;
+            var graphColorIndicies = new List<XlRgbColor>() { XlRgbColor.rgbNavy, XlRgbColor.rgbLawnGreen, XlRgbColor.rgbYellow, XlRgbColor.rgbDeepPink, XlRgbColor.rgbDarkGray, XlRgbColor.rgbOrange, XlRgbColor.rgbLightBlue, XlRgbColor.rgbRed };
 
             worksheet.Name = "Data";
 
@@ -262,6 +266,7 @@ namespace RectifierInfluenceStudyTester
             int row = 1;
             int pointIndex = 0;
             int columns = series.Count + 1;
+            var units = isVolts ? "(Volts)" : "(Milivolts)";
 
             data[0, 0] = "Time (Seconds)";
             for (int i = 0; i < series.Count; ++i)
@@ -278,14 +283,14 @@ namespace RectifierInfluenceStudyTester
                 }
                 if (cycleNum < series.Count && series[cycleNum].Points.Count > pointIndex && point.XValue == series[cycleNum].Points[pointIndex].XValue)
                 {
-                    data[row, cycleNum + 1] = series[cycleNum].Points[pointIndex].YValues[0];
+                    data[row, cycleNum + 1] = series[cycleNum].Points[pointIndex].YValues[0] * (isVolts ? 1 : 1000);
                     //worksheet.Cells[row, cycleNum + 2] = series[cycleNum].Points[pointIndex].YValues[0];
                     ++pointIndex;
                 }
                 if (point.XValue < lastX)
                     continue;
                 data[row, 0] = point.XValue;
-                data[row, 1] = point.YValues[0];
+                data[row, 1] = point.YValues[0] * (isVolts ? 1 : 1000);
                 //worksheet.Cells[row, 1] = point.XValue;
                 //worksheet.Cells[row, 2] = point.YValues[0];
                 ++row;
@@ -303,13 +308,15 @@ namespace RectifierInfluenceStudyTester
             chart.ChartTitle.Text = pSet.FileName;
             chart.ChartArea.Border.LineStyle = XlLineStyle.xlLineStyleNone;
             chart.Legend.Position = XlLegendPosition.xlLegendPositionTop;
+            Microsoft.Office.Interop.Excel.SeriesCollection excelSeriesList = chart.SeriesCollection();
+            
 
             ExcelAxis yAxis = chart.Axes(XlAxisType.xlValue);
             yAxis.ReversePlotOrder = true;
             yAxis.HasMinorGridlines = true;
             yAxis.MinorTickMark = XlTickMark.xlTickMarkCross;
             yAxis.HasTitle = true;
-            yAxis.AxisTitle.Text = (pSet.FileName.ToLower().Contains("span") ? "Current Span" : "Pipe-to-Soil Potenital") + " (Volts)";
+            yAxis.AxisTitle.Text = (pSet.FileName.ToLower().Contains("span") ? "Current Span" : "Pipe-to-Soil Potenital") + " " + units;
             if (pSet.MaxValueData < 0)
                 yAxis.MaximumScale = 0;
 
@@ -321,11 +328,29 @@ namespace RectifierInfluenceStudyTester
             xAxis.MaximumScale = Cycle.Length.TotalSeconds;
             xAxis.HasMajorGridlines = true;
             xAxis.HasTitle = true;
+            xAxis.TickLabelPosition = XlTickLabelPosition.xlTickLabelPositionHigh;
             xAxis.AxisTitle.Text = "Time (Seconds)";
 
             chart.PageSetup.RightFooter = $"{pSet.TimeStart.ToShortDateString()} {pSet.TimeStart.ToLongTimeString()}\n";
             chart.PageSetup.RightFooter += $"GPS: {pSet.Latitude.ToString("F8")},{pSet.Longitude.ToString("F8")},{pSet.Altitude}";
             chart.PageSetup.TopMargin = 0.1;
+
+            var curColorIndex = 0;
+            foreach (Microsoft.Office.Interop.Excel.Series excelSeries in excelSeriesList)
+            {
+                excelSeries.Format.Line.ForeColor.RGB = (int)graphColorIndicies[curColorIndex];
+                ++curColorIndex;
+            }
+
+            System.Reflection.Assembly CurrAssembly = System.Reflection.Assembly.LoadFrom(System.Windows.Forms.Application.ExecutablePath);
+            System.IO.Stream stream = CurrAssembly.GetManifestResourceStream("RectifierInfluenceStudyTester.Logo.jpg");
+            string temp = Path.GetTempFileName();
+            System.Drawing.Image.FromStream(stream).Save(temp);
+
+            chart.PageSetup.LeftFooterPicture.Filename = temp; //Application.StartupPath + "\\Resources\\stopka.png";
+            chart.PageSetup.LeftFooterPicture.LockAspectRatio = Microsoft.Office.Core.MsoTriState.msoTrue;
+            chart.PageSetup.LeftFooterPicture.Width = 150;
+            chart.PageSetup.LeftFooter = "&G";
 
             workbook.SaveAs(excelFileName);
             chart.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, pdfFileName, XlFixedFormatQuality.xlQualityStandard, true, false);
@@ -346,6 +371,20 @@ namespace RectifierInfluenceStudyTester
                     ++count;
                 }
             MessageBox.Show($"Done exporting {count} files!");
+        }
+
+        private void ButtonGuess_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < _Sets.Count; ++i)
+            {
+                RISDataSet set = _Sets[i];
+                var offset = Math.Round(set.GuessOffset(), 2);
+                _Offset[set.FullFileName] = offset;
+
+            }
+            if (SelectedIndex != -1)
+                ChangeToSet(SelectedIndex);
+            MessageBox.Show($"Done guessing offset for {_Sets.Count} graphs!");
         }
     }
 }

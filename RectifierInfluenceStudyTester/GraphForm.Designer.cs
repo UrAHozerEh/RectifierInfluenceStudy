@@ -40,6 +40,7 @@
             this.CheckApproved = new System.Windows.Forms.CheckBox();
             this.ButtonExportOne = new System.Windows.Forms.Button();
             this.ButtonExportApproved = new System.Windows.Forms.Button();
+            this.GuessButton = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -104,6 +105,7 @@
             this.ListFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader2});
             this.ListFiles.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.ListFiles.HideSelection = false;
             this.ListFiles.Location = new System.Drawing.Point(3, 0);
             this.ListFiles.MultiSelect = false;
             this.ListFiles.Name = "ListFiles";
@@ -160,11 +162,22 @@
             this.ButtonExportApproved.UseVisualStyleBackColor = true;
             this.ButtonExportApproved.Click += new System.EventHandler(this.ButtonExportApproved_Click);
             // 
+            // GuessButton
+            // 
+            this.GuessButton.Location = new System.Drawing.Point(113, 368);
+            this.GuessButton.Name = "GuessButton";
+            this.GuessButton.Size = new System.Drawing.Size(75, 23);
+            this.GuessButton.TabIndex = 5;
+            this.GuessButton.Text = "Guess";
+            this.GuessButton.UseVisualStyleBackColor = true;
+            this.GuessButton.Click += new System.EventHandler(this.ButtonGuess_Click);
+            // 
             // GraphForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(738, 402);
+            this.Controls.Add(this.GuessButton);
             this.Controls.Add(this.ButtonExportApproved);
             this.Controls.Add(this.ButtonExportOne);
             this.Controls.Add(this.CheckApproved);
@@ -196,5 +209,6 @@
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.Button ButtonExportOne;
         private System.Windows.Forms.Button ButtonExportApproved;
+        private System.Windows.Forms.Button GuessButton;
     }
 }

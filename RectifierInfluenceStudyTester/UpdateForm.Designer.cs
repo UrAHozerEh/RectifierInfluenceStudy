@@ -47,6 +47,7 @@
             this.txtFiles = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.btnFileBrowse = new System.Windows.Forms.Button();
+            this.txtNames = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // label1
@@ -217,11 +218,19 @@
             this.btnFileBrowse.UseVisualStyleBackColor = true;
             this.btnFileBrowse.Click += new System.EventHandler(this.btnFileBrowse_Click);
             // 
+            // txtNames
+            // 
+            this.txtNames.Location = new System.Drawing.Point(218, 182);
+            this.txtNames.Name = "txtNames";
+            this.txtNames.Size = new System.Drawing.Size(100, 20);
+            this.txtNames.TabIndex = 59;
+            // 
             // UpdateForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(441, 212);
+            this.Controls.Add(this.txtNames);
             this.Controls.Add(this.btnFileBrowse);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.txtFiles);
@@ -271,5 +280,6 @@
         private System.Windows.Forms.TextBox txtFiles;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button btnFileBrowse;
+        private System.Windows.Forms.TextBox txtNames;
     }
 }

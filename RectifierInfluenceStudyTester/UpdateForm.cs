@@ -53,25 +53,27 @@ namespace RectifierInfluenceStudyTester
             if (!double.TryParse(txtDelay.Text, out delay)) return;
             if (!int.TryParse(txtCycles.Text, out cycles)) return;
             string[] names = new string[cycles];
-            for(int i = 1; i <= cycles; ++i)
+            var inputNames = txtNames.Text.Split(',');
+            var unusedCount = 0;
+            for (int i = 1; i <= cycles; ++i)
             {
                 names[i - 1] = "Cycle " + i + " of " + cycles;
-            }
-            if (names.Length == 14)
-            {
-                names[0] = "EPNG CPS 108-5";
-                names[1] = "EPNG CPS 1668";
-                names[2] = "EPNG CPS 140";
-                names[3] = "EPNG CPS 2331";
-                names[4] = "EPNG CPS 185-P";
-                names[5] = "EPNG CPS 808";
-                names[6] = "QUESTAR B-52";
-                names[7] = "QUESTAR B-58";
+                if (!string.IsNullOrWhiteSpace(txtNames.Text))
+                {
+                    if (inputNames.Length > i - 1 && !string.IsNullOrWhiteSpace(inputNames[i - 1]))
+                    {
+                        names[i - 1] = inputNames[i - 1];
+                    }
+                    else
+                    {
+                        names[i - 1] = $"Unused {++unusedCount}";
+                    }
+                }
             }
 
             InterruptionCycle cycle = new MultiSetInterruptionCycle("", on, off, delay, names);
             _Form.Cycle = cycle;
-            if(string.IsNullOrWhiteSpace(txtFolder.Text))
+            if (string.IsNullOrWhiteSpace(txtFolder.Text))
             {
                 _Form.Folder = "";
                 _Form.Files = _Files;
@@ -90,7 +92,7 @@ namespace RectifierInfluenceStudyTester
         {
             FolderBrowserDialog dialog = new FolderBrowserDialog();
             DialogResult result = dialog.ShowDialog();
-            if(result != DialogResult.Cancel)
+            if (result != DialogResult.Cancel)
             {
                 txtFolder.Text = dialog.SelectedPath;
                 _Files = null;
@@ -131,7 +133,7 @@ namespace RectifierInfluenceStudyTester
             dialog.Filter = "*.csv | *.csv";
             dialog.Multiselect = true;
             DialogResult result = dialog.ShowDialog();
-            if(result != DialogResult.Cancel)
+            if (result != DialogResult.Cancel)
             {
                 txtFolder.Text = "";
                 _Files = dialog.FileNames;

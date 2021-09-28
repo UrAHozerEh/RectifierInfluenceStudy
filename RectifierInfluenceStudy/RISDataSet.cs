@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace RectifierInfluenceStudy
@@ -66,6 +67,79 @@ namespace RectifierInfluenceStudy
                 default:
                     break;
             }
+        }
+
+        public double GuessOffset(double averageOffsetWeight = 1, double averageStdDevWeight = 3, double allOnStdDevWeight = 5)
+        {
+            var startingOffset = Offset;
+
+            var setLength = InterruptionCycle.Length.TotalSeconds;
+            var min = 0 - (setLength / 2);
+            var max = setLength + min;
+            var bestScore = double.MaxValue;
+            var bestOffset = startingOffset;
+
+            for (double curOffset = min; curOffset < max; curOffset += 0.05)
+            {
+                Offset = curOffset;
+                var averages = GenerateAverages();
+                var allOnAverage = averages[0];
+                var allOffAverage = averages[averages.Count - 1];
+                var allOffDifference = allOnAverage - allOffAverage;
+                var inCycleDifference = 0.0;
+                for (int i = 1; i < averages.Count - 1; ++i)
+                {
+                    var curCycleDifference = allOnAverage - averages[i];
+                    inCycleDifference += curCycleDifference;
+                }
+                var averageOffset = Math.Abs(inCycleDifference - allOffDifference);
+                var averageStdDev = CalculateAverageStandardDeviation();
+                var allOnStdDev = CalculateStandardDeviation(GraphReads[0]);
+                var score = averageOffset * averageOffsetWeight + averageStdDev * averageStdDevWeight + allOnStdDev * allOnStdDevWeight;
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    bestOffset = curOffset;
+                }
+            }
+
+            Offset = startingOffset;
+            return bestOffset;
+        }
+
+        private double CalculateAverageStandardDeviation()
+        {
+            CreateGraphReads();
+            var total = 0.0;
+            var count = 0;
+
+            foreach (var readsPair in GraphReads)
+            {
+                var std = CalculateStandardDeviation(readsPair.Value);
+                total += std;
+                ++count;
+            }
+
+            return total / count;
+        }
+
+        private double CalculateStandardDeviation(IEnumerable<GraphRead> values)
+        {
+            double standardDeviation = 0;
+
+            if (values.Any())
+            {
+                // Compute the average.     
+                double avg = values.Average(v => v.Value);
+
+                // Perform the Sum of (value-avg)_2_2.      
+                double sum = values.Sum(d => Math.Pow(d.Value - avg, 2));
+
+                // Put it all together.      
+                standardDeviation = Math.Sqrt((sum) / (values.Count() - 1));
+            }
+
+            return standardDeviation;
         }
 
         private void ReadMcMilleriBTVMFile(string pFilePath)
@@ -177,7 +251,7 @@ namespace RectifierInfluenceStudy
                 time = _DataReads[i].UTCTime.Add(offset);
                 readValue = _DataReads[i].Value;
                 setPosition = InterruptionCycle.GetSetPosition(time);
-                if(count.ContainsKey(setPosition))
+                if (count.ContainsKey(setPosition))
                 {
                     ++count[setPosition];
                     sum[setPosition] += readValue;
@@ -189,7 +263,7 @@ namespace RectifierInfluenceStudy
                 }
             }
 
-            foreach(int set in count.Keys)
+            foreach (int set in count.Keys)
             {
                 averages.Add(set, sum[set] / count[set]);
             }
