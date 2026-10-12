@@ -34,7 +34,7 @@ namespace RectifierInfluenceStudyTester
         private double _SpanMax = double.MinValue;
         private bool _AutoScale = true;
         private int SelectedIndex => ListFiles.SelectedIndices.Count == 0 ? -1 : ListFiles.SelectedIndices[0];
-        private string SelectedFullName => _Sets[SelectedIndex].FullFileName;
+        private string SelectedFullName => SelectedIndex == -1 ? "" : _Sets[SelectedIndex].FullFileName;
         private int _OldIndex = -1;
         private ExcelApplication _Excel = new ExcelApplication();
 
@@ -255,7 +255,7 @@ namespace RectifierInfluenceStudyTester
             string pdfFileName = Path.ChangeExtension(pSet.FullFileName, ".pdf");
             Workbook workbook = _Excel.Workbooks.Add(Type.Missing);
             Worksheet worksheet = workbook.ActiveSheet as Worksheet;
-            var graphColorIndicies = new List<XlRgbColor>() { XlRgbColor.rgbNavy, XlRgbColor.rgbLawnGreen, XlRgbColor.rgbYellow, XlRgbColor.rgbDeepPink, XlRgbColor.rgbDarkGray, XlRgbColor.rgbOrange, XlRgbColor.rgbLightBlue, XlRgbColor.rgbRed };
+            var graphColorIndicies = new List<XlRgbColor>() { XlRgbColor.rgbNavy, XlRgbColor.rgbLawnGreen, XlRgbColor.rgbYellow, XlRgbColor.rgbDeepPink, XlRgbColor.rgbDarkGray, XlRgbColor.rgbOrange, XlRgbColor.rgbLightBlue, XlRgbColor.rgbRed, XlRgbColor.rgbOlive, XlRgbColor.rgbOrange, XlRgbColor.rgbAqua, XlRgbColor.rgbBlueViolet, XlRgbColor.rgbDarkSalmon, XlRgbColor.rgbDarkKhaki, XlRgbColor.rgbDarkGray, XlRgbColor.rgbDarkGoldenrod };
 
             worksheet.Name = "Data";
 
@@ -309,7 +309,7 @@ namespace RectifierInfluenceStudyTester
             chart.ChartArea.Border.LineStyle = XlLineStyle.xlLineStyleNone;
             chart.Legend.Position = XlLegendPosition.xlLegendPositionTop;
             Microsoft.Office.Interop.Excel.SeriesCollection excelSeriesList = chart.SeriesCollection();
-            
+
 
             ExcelAxis yAxis = chart.Axes(XlAxisType.xlValue);
             yAxis.ReversePlotOrder = true;
@@ -340,6 +340,8 @@ namespace RectifierInfluenceStudyTester
             {
                 excelSeries.Format.Line.ForeColor.RGB = (int)graphColorIndicies[curColorIndex];
                 ++curColorIndex;
+                if (curColorIndex == graphColorIndicies.Count)
+                    curColorIndex = 1;
             }
 
             System.Reflection.Assembly CurrAssembly = System.Reflection.Assembly.LoadFrom(System.Windows.Forms.Application.ExecutablePath);

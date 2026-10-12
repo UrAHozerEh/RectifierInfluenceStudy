@@ -160,6 +160,8 @@ namespace RectifierInfluenceStudy
                     split = line.Split(',');
                     if (!DateTime.TryParseExact(split[0], "M/dd/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture, DateTimeStyles.None, out time))
                         throw new ArgumentException($"Format of file {FileName} is incorrect on line {lineCount}\nTime is incorrect format.");
+                    if (split[1] == "NONE")
+                        continue;
                     if (!float.TryParse(split[1], out readValue))
                         throw new ArgumentException($"Format of file {FileName} is incorrect on line {lineCount}\nRead is not double.");
                     if (lineCount == 1)
